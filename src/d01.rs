@@ -1,4 +1,4 @@
-use std::collections::{hash_map, HashMap};
+use std::collections::HashMap;
 
 fn load_data(v1: &mut Vec<i32>, v2: &mut Vec<i32>) {
     use std::fs;
@@ -34,7 +34,9 @@ fn similarity() -> i32 {
     for e in data2 {
         *count.entry(e).or_default() += 1;
     }
-    data1.iter().fold(0, |a, x| a + *count.entry(*x).or_default() * x)
+    data1
+        .iter()
+        .fold(0, |a, x| a + *count.entry(*x).or_default() * x)
 }
 
 #[cfg(test)]
