@@ -1,5 +1,3 @@
-use std::clone;
-
 fn load_data() -> Vec<Vec<i32>> {
     use std::fs;
 
