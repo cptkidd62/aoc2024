@@ -9,7 +9,7 @@ use nom::{
     IResult,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct State {
     reg_a: u32,
     reg_b: u32,
@@ -77,6 +77,15 @@ impl State {
         }
     }
 
+    fn is_output_fitting(self: &Self) -> bool {
+        self.output.len() <= self.program.len()
+            && self
+                .output
+                .iter()
+                .zip(self.program.iter())
+                .all(|(&x, &y)| x == y)
+    }
+
     fn out_string(self: &Self) -> String {
         self.output
             .iter()
@@ -136,6 +145,21 @@ mod tests {
 
     #[test]
     fn task2() {
-        // println!("{}", calculate_price(map_area_new(code_area(load_data()))));
+        println!("{}", {
+            let sta = load_data();
+            let mut c = 0;
+            for i in 1_000_000..usize::MAX {
+                let mut st = sta.clone();
+                st.reg_a = i as u32;
+                while !st.is_done() && st.is_output_fitting() {
+                    st.do_instruction();
+                }
+                if st.output == st.program {
+                    c = i;
+                    break;
+                }
+            }
+            c
+        });
     }
 }
