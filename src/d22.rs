@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 fn load_data() -> Vec<u128> {
     use std::fs;
 
@@ -31,32 +33,64 @@ fn get_nth_next_secret(x: u128, n: usize) -> u128 {
     r
 }
 
+fn get_n_next_secrets(x: u128, n: usize) -> Vec<u128> {
+    let mut r = x;
+    let mut v = vec![x];
+    for _ in 0..n {
+        r = get_next_secret(r);
+        v.push(r);
+    }
+    v
+}
+
+fn find_most_bananas() -> i64 {
+    let v = load_data();
+    let prices = v
+        .iter()
+        .map(|&x| {
+            get_n_next_secrets(x, 2000)
+                .iter()
+                .map(|&y| (y % 10) as i64)
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    let changes = prices
+        .iter()
+        .map(|v| v.windows(2).map(|s| s[1] - s[0]).collect::<Vec<_>>())
+        .collect::<Vec<_>>();
+    let mut maps = vec![HashMap::new(); prices.len()];
+    for (i, buyer) in changes.iter().enumerate() {
+        for (j, seq) in buyer.windows(4).enumerate() {
+            let _ = maps[i].entry(seq).or_insert(prices[i][j + 4]);
+        }
+    }
+    let mut map = HashMap::new();
+    for m in maps {
+        for (k, v) in m {
+            let e = map.entry(k).or_insert(0);
+            *e = *e + v;
+        }
+    }
+    map.iter().map(|(_, &v)| v).max().unwrap()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn task1() {
-        println!("{}", load_data().iter().map(|&x| get_nth_next_secret(x, 2000)).sum::<u128>());
+        println!(
+            "{}",
+            load_data()
+                .iter()
+                .map(|&x| get_nth_next_secret(x, 2000))
+                .sum::<u128>()
+        );
     }
 
     #[test]
     fn task2() {
-        // println!("{}", {
-        //     let sta = load_data();
-        //     let mut c = 0;
-        //     for i in 1_000_000..usize::MAX {
-        //         let mut st = sta.clone();
-        //         st.reg_a = i as u32;
-        //         while !st.is_done() && st.is_output_fitting() {
-        //             st.do_instruction();
-        //         }
-        //         if st.output == st.program {
-        //             c = i;
-        //             break;
-        //         }
-        //     }
-        //     c
-        // });
+        println!("{}", find_most_bananas());
     }
 }
