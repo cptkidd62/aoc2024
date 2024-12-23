@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    iter,
+};
 
 fn load_data() -> Vec<(String, String)> {
     use std::fs;
@@ -73,6 +76,83 @@ fn triples_in_clusters(map: HashMap<String, HashSet<String>>) -> HashSet<(String
     set
 }
 
+fn form_clique(
+    clique: HashSet<String>,
+    map: &HashMap<String, HashSet<String>>,
+    to_add: HashSet<String>,
+) -> HashSet<String> {
+    to_add
+        .iter()
+        .filter_map(|v| match map.get(v) {
+            Some(arr) => {
+                if clique.iter().all(|a| arr.contains(a)) {
+                    let mut clique1 = clique.clone();
+                    clique1.insert(v.clone());
+                    let mut to_add1 = to_add.clone();
+                    to_add1.remove(v);
+                    Some(form_clique(clique1, map, to_add1))
+                } else {
+                    None
+                }
+            }
+            None => None,
+        })
+        .fold(clique.clone(), |a, c| if c.len() > a.len() { c } else { a })
+}
+
+fn find_all_cliques(map: HashMap<String, HashSet<String>>) -> Vec<HashSet<String>> {
+    let mut cliques = vec![];
+    let map1 = map.clone();
+    for (k, v) in map {
+        cliques.push(form_clique(HashSet::from([k; 1]), &map1, v));
+    }
+    cliques
+}
+
+fn get_pwd_to_largest(clique: HashSet<String>) -> String {
+    let mut comps = clique.iter().map(|s| s.clone()).collect::<Vec<_>>();
+    comps.sort();
+    comps.join(",")
+}
+
+fn find_max_clique() -> HashSet<String> {
+    let clusters = pairs_to_clusters(load_data());
+    let triples = triples_in_clusters(clusters.clone());
+    let comps = clusters
+        .keys()
+        .map(|k| k.to_string())
+        .collect::<HashSet<_>>();
+    let mut cliques = vec![];
+    for (a, b, c) in triples {
+        let mut s = HashSet::new();
+        s.insert(a);
+        s.insert(b);
+        s.insert(c);
+        cliques.push(s);
+    }
+    let mut cliquesn = vec![];
+    for _ in 0..20 {
+        for c in cliques.iter() {
+            let to_try = comps.difference(&c).collect::<HashSet<_>>();
+            for s in to_try {
+                let arr = clusters.get(s).unwrap();
+                if c.iter().all(|f| f == s || arr.contains(f)) {
+                    let mut c1 = c.clone();
+                    c1.insert(s.clone());
+                    cliquesn.push(c1);
+                }
+            }
+        }
+        cliquesn.dedup();
+        if cliquesn.len() == 0 {
+            return cliques[0].clone();
+        }
+        cliques = cliquesn.clone();
+        cliquesn.clear();
+    }
+    HashSet::new()
+}
+
 fn count_ts(set: HashSet<(String, String, String)>) -> usize {
     set.iter()
         .filter(|(a, b, c)| &a[0..1] == "t" || &b[0..1] == "t" || &c[0..1] == "t")
@@ -93,6 +173,6 @@ mod tests {
 
     #[test]
     fn task2() {
-        // println!("{}", find_most_bananas());
+        println!("{:?}", find_max_clique());
     }
 }
