@@ -19,6 +19,7 @@ mod d21;
 mod d22;
 mod d23;
 mod d24;
+mod d25;
 
 fn main() {
     println!("Hello, world!");
